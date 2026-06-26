@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as readline from 'readline/promises';
 import ffmpeg from 'ffmpeg-static';
+import ora from 'ora';
 
 // Создаем классический require внутри ESM модуля
 const require = createRequire(import.meta.url);
@@ -26,14 +27,18 @@ async function downloadMedia(url: string, onlyAudio: boolean = false): Promise<v
         ffmpegLocation: ffmpeg,
         output: path.join(outputFolder, '%(title)s.%(ext)s'),
     };
+    let spinner: any;
 
     if (onlyAudio) {
-        console.log('🎵 Извлекаю аудиодорожку в MP3...');
+        spinner = ora('Извлекаю аудиодорожку в MP3...').start();
+        // console.log('🎵 Извлекаю аудиодорожку в MP3...');
         options.extractAudio = true;
         options.audioFormat = 'mp3';
         options.format = 'bestaudio/best';
     } else {
-        console.log('🎬 Скачиваю видео в MP4 (максимальное качество)...');
+        // console.log('🎬 Скачиваю видео в MP4 (максимальное качество)...');
+        spinner = ora('Скачиваю видео в MP4 (максимальное качество)...').start();
+
         options.format = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
         options.mergeOutputFormat = 'mp4';
     }
@@ -41,6 +46,7 @@ async function downloadMedia(url: string, onlyAudio: boolean = false): Promise<v
     try {
         // Вызываем функцию из пакета youtube-dl-exec
         await youtubedl(url, options);
+        spinner.stop();
         console.log(`🎉 Успешно сохранено в папку: ${outputFolder}`);
     } catch (error) {
         console.error('❌ Ошибка во время обработки:', error);
